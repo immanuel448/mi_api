@@ -44,6 +44,23 @@ exports.obtenerMovimientos = (req, res) => {
   return success(res, movimientos);
 };
 
+// GET por ID
+exports.obtenerMovimientoPorId = (req, res) => {
+  const id = parseInt(req.params.id);
+
+  if (isNaN(id)) {
+    return error(res, "ID inválido", 400);
+  }
+
+  const movimiento = movimientos.find((m) => m.id === id);
+
+  if (!movimiento) {
+    return error(res, "Movimiento no encontrado", 404);
+  }
+
+  return success(res, movimiento);
+};
+
 // POST
 exports.crearMovimiento = (req, res) => {
   const errorMsg = validarMovimiento(req.body, true);

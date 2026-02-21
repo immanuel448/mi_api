@@ -4,6 +4,7 @@ const router = express.Router();
 const movimientosController = require('../controllers/movimientos.controller');
 
 router.get('/', movimientosController.obtenerMovimientos);
+router.get('/:id', movimientosController.obtenerMovimientoPorId);
 router.post('/', movimientosController.crearMovimiento);
 router.put('/:id', movimientosController.actualizarMovimiento);
 router.delete('/:id', movimientosController.eliminarMovimiento);
