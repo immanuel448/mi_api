@@ -5,7 +5,7 @@ let movimientos = [
     monto: 1500,
     fuente: "venta",
     fecha_movimiento: "2026-02-20",
-    fecha_registro: "2026-02-20"
+    fecha_registro: "2026-02-20",
   },
   {
     id: 2,
@@ -13,9 +13,11 @@ let movimientos = [
     monto: 500,
     fuente: "compra",
     fecha_movimiento: "2026-02-19",
-    fecha_registro: "2026-02-20"
-  }
+    fecha_registro: "2026-02-20",
+  },
 ];
+
+const { success, error } = require("../utils/response");
 
 const validarMovimiento = (data, esCreacion = true) => {
   const { tipo, monto, fuente, fecha_movimiento } = data;
@@ -39,15 +41,15 @@ const validarMovimiento = (data, esCreacion = true) => {
 
 // GET
 exports.obtenerMovimientos = (req, res) => {
-  res.json(movimientos);
+  return success(res, movimientos);
 };
 
 // POST
 exports.crearMovimiento = (req, res) => {
-  const error = validarMovimiento(req.body, true);
+  const errorMsg = validarMovimiento(req.body, true);
 
-  if (error) {
-    return res.status(400).json({ mensaje: error });
+  if (errorMsg) {
+    return error(res, errorMsg, 400);
   }
 
   const nuevoMovimiento = {
@@ -56,35 +58,41 @@ exports.crearMovimiento = (req, res) => {
     monto: req.body.monto,
     fuente: req.body.fuente,
     fecha_movimiento: req.body.fecha_movimiento,
-    fecha_registro: new Date().toISOString().split('T')[0]
+    fecha_registro: new Date().toISOString().split("T")[0],
   };
 
   movimientos.push(nuevoMovimiento);
-  res.status(201).json(nuevoMovimiento);
+
+  return success(res, nuevoMovimiento, "Movimiento creado", 201);
 };
 
 // DELETE
 exports.eliminarMovimiento = (req, res) => {
   const id = parseInt(req.params.id);
-
-  movimientos = movimientos.filter(m => m.id !== id);
-
-  res.json({ mensaje: "Movimiento eliminado" });
-};
-
-// PUT (actualizar movimiento)
-exports.actualizarMovimiento = (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = movimientos.findIndex(m => m.id === id);
+  const index = movimientos.findIndex((m) => m.id === id);
 
   if (index === -1) {
-    return res.status(404).json({ mensaje: "Movimiento no encontrado" });
+    return error(res, "Movimiento no encontrado", 404);
   }
 
-  const error = validarMovimiento(req.body, false);
+  movimientos.splice(index, 1);
 
-  if (error) {
-    return res.status(400).json({ mensaje: error });
+  return success(res, null, "Movimiento eliminado");
+};
+
+// PUT
+exports.actualizarMovimiento = (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = movimientos.findIndex((m) => m.id === id);
+
+  if (index === -1) {
+    return error(res, "Movimiento no encontrado", 404);
+  }
+
+  const errorMsg = validarMovimiento(req.body, false);
+
+  if (errorMsg) {
+    return error(res, errorMsg, 400);
   }
 
   const datosActualizados = { ...req.body };
@@ -94,9 +102,8 @@ exports.actualizarMovimiento = (req, res) => {
 
   movimientos[index] = {
     ...movimientos[index],
-    ...datosActualizados
+    ...datosActualizados,
   };
 
-  res.json(movimientos[index]);
+  return success(res, movimientos[index], "Movimiento actualizado");
 };
-

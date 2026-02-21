@@ -13,3 +13,7 @@ app.get('/', (req, res) => {
 
 module.exports = app;
 
+//para el manejo de errores centralizado
+const errorHandler = require('./middlewares/errorHandler');
+
+app.use(errorHandler);
