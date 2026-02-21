@@ -17,6 +17,26 @@ let movimientos = [
   }
 ];
 
+const validarMovimiento = (data, esCreacion = true) => {
+  const { tipo, monto, fuente, fecha_movimiento } = data;
+
+  if (esCreacion) {
+    if (!tipo || !monto || !fuente || !fecha_movimiento) {
+      return "Faltan datos obligatorios";
+    }
+  }
+
+  if (tipo && !["ingreso", "egreso"].includes(tipo)) {
+    return "Tipo inválido";
+  }
+
+  if (monto && (isNaN(monto) || monto <= 0)) {
+    return "Monto inválido";
+  }
+
+  return null;
+};
+
 // GET
 exports.obtenerMovimientos = (req, res) => {
   res.json(movimientos);
@@ -24,26 +44,18 @@ exports.obtenerMovimientos = (req, res) => {
 
 // POST
 exports.crearMovimiento = (req, res) => {
-  const { tipo, monto, fuente, fecha_movimiento } = req.body;
+  const error = validarMovimiento(req.body, true);
 
-  if (!tipo || !monto || !fuente || !fecha_movimiento) {
-    return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
-  }
-
-  if (!["ingreso", "egreso"].includes(tipo)) {
-    return res.status(400).json({ mensaje: "Tipo inválido" });
-  }
-
-  if (isNaN(monto) || monto <= 0) {
-    return res.status(400).json({ mensaje: "Monto inválido" });
+  if (error) {
+    return res.status(400).json({ mensaje: error });
   }
 
   const nuevoMovimiento = {
     id: movimientos.length + 1,
-    tipo,
-    monto,
-    fuente,
-    fecha_movimiento,
+    tipo: req.body.tipo,
+    monto: req.body.monto,
+    fuente: req.body.fuente,
+    fecha_movimiento: req.body.fecha_movimiento,
     fecha_registro: new Date().toISOString().split('T')[0]
   };
 
@@ -63,17 +75,28 @@ exports.eliminarMovimiento = (req, res) => {
 // PUT (actualizar movimiento)
 exports.actualizarMovimiento = (req, res) => {
   const id = parseInt(req.params.id);
-
   const index = movimientos.findIndex(m => m.id === id);
 
   if (index === -1) {
     return res.status(404).json({ mensaje: "Movimiento no encontrado" });
   }
 
+  const error = validarMovimiento(req.body, false);
+
+  if (error) {
+    return res.status(400).json({ mensaje: error });
+  }
+
+  const datosActualizados = { ...req.body };
+
+  delete datosActualizados.id;
+  delete datosActualizados.fecha_registro;
+
   movimientos[index] = {
     ...movimientos[index],
-    ...req.body
+    ...datosActualizados
   };
 
   res.json(movimientos[index]);
 };
+
