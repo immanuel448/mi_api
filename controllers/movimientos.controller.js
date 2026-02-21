@@ -42,3 +42,21 @@ exports.eliminarMovimiento = (req, res) => {
 
   res.json({ mensaje: "Movimiento eliminado" });
 };
+
+// PUT (actualizar movimiento)
+exports.actualizarMovimiento = (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const index = movimientos.findIndex(m => m.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ mensaje: "Movimiento no encontrado" });
+  }
+
+  movimientos[index] = {
+    ...movimientos[index],
+    ...req.body
+  };
+
+  res.json(movimientos[index]);
+};
