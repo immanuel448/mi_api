@@ -24,9 +24,26 @@ exports.obtenerMovimientos = (req, res) => {
 
 // POST
 exports.crearMovimiento = (req, res) => {
+  const { tipo, monto, fuente, fecha_movimiento } = req.body;
+
+  if (!tipo || !monto || !fuente || !fecha_movimiento) {
+    return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
+  }
+
+  if (!["ingreso", "egreso"].includes(tipo)) {
+    return res.status(400).json({ mensaje: "Tipo inválido" });
+  }
+
+  if (isNaN(monto) || monto <= 0) {
+    return res.status(400).json({ mensaje: "Monto inválido" });
+  }
+
   const nuevoMovimiento = {
     id: movimientos.length + 1,
-    ...req.body,
+    tipo,
+    monto,
+    fuente,
+    fecha_movimiento,
     fecha_registro: new Date().toISOString().split('T')[0]
   };
 
