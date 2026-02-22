@@ -131,31 +131,38 @@ exports.eliminarMovimiento = (req, res) => {
 exports.actualizarMovimiento = (req, res) => {
   const id = parseInt(req.params.id);
 
-  // busca el movimiento
-  const index = movimientos.findIndex((m) => m.id === id);
+  // validar id
+  if (isNaN(id)) {
+    return error(res, "ID inválido", 400);
+  }
 
+  // buscar movimiento
+  const index = movimientos.findIndex((m) => m.id === id);
   if (index === -1) {
     return error(res, "Movimiento no encontrado", 404);
   }
 
-  // valida datos enviados (modo actualización)
-  const errorMsg = validarMovimiento(req.body, false);
+  // SOLO campos permitidos
+  const camposPermitidos = ["tipo", "monto", "fuente", "fecha_movimiento"];
 
+  //Object.entries - crea pares clave-valor solo con campos permitidos 
+  //Object.fromEntries - vuelve a convertir esos pares en un objeto con solo los campos válidos
+  const datosActualizados = Object.fromEntries(
+    Object.entries(req.body).filter(([key]) =>
+      camposPermitidos.includes(key)
+    )
+  );
+
+  // validar datos filtrados
+  const errorMsg = validarMovimiento(datosActualizados, false);
   if (errorMsg) {
     return error(res, errorMsg, 400);
   }
 
-  // copia datos enviados
-  const datosActualizados = { ...req.body };
-
-  // evita que el usuario modifique campos protegidos
-  delete datosActualizados.id;
-  delete datosActualizados.fecha_registro;
-
-  // mezcla datos antiguos + nuevos
+  // actualizar mezclando datos
   movimientos[index] = {
     ...movimientos[index],
-    ...datosActualizados,
+    ...datosActualizados
   };
 
   return success(res, movimientos[index], "Movimiento actualizado");
