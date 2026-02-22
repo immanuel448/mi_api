@@ -92,21 +92,26 @@ exports.crearMovimiento = (req, res) => {
     return error(res, errorMsg, 400);
   }
 
+  // genera id único basado en el mayor existente
+  const nuevoId =
+    movimientos.length > 0
+      ? Math.max(...movimientos.map(m => m.id)) + 1
+      : 1;
+
   // crea objeto nuevo
   const nuevoMovimiento = {
-    id: movimientos.length + 1, // id incremental simple
+    id: nuevoId,
     tipo: req.body.tipo,
     monto: req.body.monto,
     fuente: req.body.fuente,
     fecha_movimiento: req.body.fecha_movimiento,
-    fecha_registro: new Date().toISOString().split("T")[0], // fecha actual
+    fecha_registro: new Date().toISOString().split("T")[0],
   };
 
-  movimientos.push(nuevoMovimiento); // guarda en arreglo
+  movimientos.push(nuevoMovimiento);
 
   return success(res, nuevoMovimiento, "Movimiento creado", 201);
 };
-
 
 // ---------- DELETE ----------
 // Elimina un movimiento por id
