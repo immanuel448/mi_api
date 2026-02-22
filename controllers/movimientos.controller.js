@@ -30,11 +30,15 @@ const { success, error } = require("../utils/response");
 // ---------- VALIDADOR ----------
 // Valida datos antes de crear o actualizar un movimiento
 const validarMovimiento = (data, esCreacion = true) => {
-  const { tipo, monto, fuente, fecha_movimiento } = data;
 
+  if (!data || typeof data !== "object") { // eeeee valida body válido
+    return "Body inválido";
+  }
+
+  const { tipo, monto, fuente, fecha_movimiento } = data;
   // Si es creación, todos los campos son obligatorios
   if (esCreacion) {
-    if (!tipo || !monto || !fuente || !fecha_movimiento) {
+    if (!tipo || monto === undefined || !fuente || !fecha_movimiento) { // eeeee monto puede ser 0
       return "Faltan datos obligatorios";
     }
   }
@@ -44,12 +48,18 @@ const validarMovimiento = (data, esCreacion = true) => {
     return "Tipo inválido";
   }
 
-  // Valida monto numérico y positivo
-  if (monto && (isNaN(monto) || monto <= 0)) {
-    return "Monto inválido";
+  if (monto !== undefined) { // eeeee valida aunque sea 0
+    const montoNum = Number(monto); // eeeee fuerza número
+    if (isNaN(montoNum) || montoNum <= 0) {
+      return "Monto inválido";
+    }
   }
 
-  return null; // si no hay errores
+  if (fecha_movimiento && isNaN(Date.parse(fecha_movimiento))) { // eeeee valida fecha real
+    return "Fecha inválida";
+  }
+
+  return null;
 };
 
 
@@ -63,9 +73,9 @@ exports.obtenerMovimientos = (req, res) => {
 // ---------- GET POR ID ----------
 // Busca un movimiento específico
 exports.obtenerMovimientoPorId = (req, res) => {
-  const id = parseInt(req.params.id); // convierte string a número
+  const id = parseInt(req.params.id);
 
-  // valida id
+  //valida que el id sea un número válido
   if (isNaN(id)) {
     return error(res, "ID inválido", 400);
   }
@@ -85,24 +95,25 @@ exports.obtenerMovimientoPorId = (req, res) => {
 // ---------- POST ----------
 // Crea un movimiento nuevo
 exports.crearMovimiento = (req, res) => {
-  // valida datos recibidos
-  const errorMsg = validarMovimiento(req.body, true);
 
+  if (!req.body || typeof req.body !== "object") { // eeeee
+    return error(res,"Body inválido",400);
+  }
+
+  const errorMsg = validarMovimiento(req.body, true);
   if (errorMsg) {
     return error(res, errorMsg, 400);
   }
-
-  // genera id único basado en el mayor existente
+// genera id único basado en el mayor existente
   const nuevoId =
     movimientos.length > 0
       ? Math.max(...movimientos.map(m => m.id)) + 1
       : 1;
-
   // crea objeto nuevo
   const nuevoMovimiento = {
     id: nuevoId,
     tipo: req.body.tipo,
-    monto: req.body.monto,
+    monto: Number(req.body.monto), // eeeee fuerza número
     fuente: req.body.fuente,
     fecha_movimiento: req.body.fecha_movimiento,
     fecha_registro: new Date().toISOString().split("T")[0],
@@ -113,27 +124,36 @@ exports.crearMovimiento = (req, res) => {
   return success(res, nuevoMovimiento, "Movimiento creado", 201);
 };
 
+
 // ---------- DELETE ----------
 // Elimina un movimiento por id
 exports.eliminarMovimiento = (req, res) => {
   const id = parseInt(req.params.id);
 
-  // busca posición en el arreglo
+  if (isNaN(id)) { // eeeee validación faltante
+    return error(res, "ID inválido", 400);
+  }
+
   const index = movimientos.findIndex((m) => m.id === id);
 
   if (index === -1) {
     return error(res, "Movimiento no encontrado", 404);
   }
 
-  movimientos.splice(index, 1); // elimina del arreglo
+  movimientos.splice(index, 1);
 
   return success(res, null, "Movimiento eliminado");
 };
 
 
 // ---------- PUT ----------
-// Actualiza un movimiento existente
+// Elimina un movimiento por id
 exports.actualizarMovimiento = (req, res) => {
+
+  if (!req.body || typeof req.body !== "object") { // eeeee
+    return error(res,"Body inválido",400);
+  }
+
   const id = parseInt(req.params.id);
 
   // validar id
@@ -158,7 +178,14 @@ exports.actualizarMovimiento = (req, res) => {
     )
   );
 
-  // validar datos filtrados
+  if (Object.keys(datosActualizados).length === 0) { // eeeee evita update vacío
+    return error(res,"No se enviaron campos válidos",400);
+  }
+
+  if (datosActualizados.monto !== undefined) { // eeeee fuerza número
+    datosActualizados.monto = Number(datosActualizados.monto);
+  }
+
   const errorMsg = validarMovimiento(datosActualizados, false);
   if (errorMsg) {
     return error(res, errorMsg, 400);
