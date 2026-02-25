@@ -137,7 +137,7 @@ exports.eliminarMovimiento = async (req, res) => {
 };
 
 // ---------- PUT ----------
-// Elimina un movimiento por id
+// Actualiza un movimiento por id
 exports.actualizarMovimiento = async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) return error(res, "ID inválido", 400);
