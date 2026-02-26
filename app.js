@@ -5,9 +5,12 @@
 // - Define una ruta base de prueba
 // - Usa un middleware global para manejo de errores
 
+
 const express = require('express'); // Importa Express (framework para crear servidores y APIs)
+const cors = require("cors"); // Importa CORS (middleware para permitir solicitudes desde otros dominios)
 const app = express(); // Crea la aplicación de Express
 
+app.use(cors());
 app.use(express.json()); // Middleware que permite recibir datos en formato JSON en req.body
 
 // Importa las rutas relacionadas con "movimientos"
